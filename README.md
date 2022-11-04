@@ -1,57 +1,4 @@
-# WolfVision
-
-WildWolf Team RoboMaster-2023 Visual &amp; Algorithm Group Code Framework.
-
-## Enviroment
-
-| name           | version                        |
-|:--------------:|:------------------------------:|
-| System         | [`Ubuntu 21.04`](https://discourse.ubuntu.com/t/hirsute-hippo-release-notes/19221) |
-| OpenCV         | [`4.5.3`](https://github.com/opencv/opencv/releases/tag/4.5.3) |
-| OpenCV_Contrib | [`4.5.3`](https://github.com/opencv/opencv_contrib/releases/tag/4.5.3) |
-| CMake          | [`3.21.0`](https://cmake.org/) |
-| GCC            | [`11.1.0`](https://ftp.gnu.org/gnu/gcc/gcc-11.1.0/) |
-| GDB            | [`10.2`](https://www.gnu.org/software/gdb/download/) |
-| MindVision-SDK | [`2.1.0`](http://mindvision.com.cn/rjxz/list_12.aspx) | 
-| cpp-mjpeg-streamer |[html](https://github.com/nadjieb/cpp-mjpeg-streamer/tree/master)
-## Contribute
-
-Project created using [Visual Studio Code](https://code.visualstudio.com/), required plugins listed below:
-
-- C/C++ `ms-vscode.cpptools`
-- CMake `twxs.cmake`
-- CMake Tools `ms-vscode.cmake-tools`
-- Visual Studio IntelliCode `visualstudioexptteam.vscodeintellicode`
-
-Our project is here [Projects](https://github.com/wildwolf-team/WolfVision/projects).
-
-### Guide
-
-Before start coding, please finish project configuration first:
-
-```shell
-sudo bash scripts/autoconfig.sh
-```
-
-After configuration, enjoy coding follow [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html), linting by command:
-
-```shell
-bash scripts/cpplint-pre-commit.sh
-```
-
-### Commit Lint
-
-- feat: new feature
-- fix: modify the issue
-- refactor: code refactoring
-- docs: documentation changes
-- style: code formatting changes
-- test: test case modifications
-- chore: other changes, such as build process, dependency management
-
-## License
-
-`MIT, Copyright WildWolf Team 2023`
+# WolfVsion 2023
 
 ## 使用方法
 
@@ -93,6 +40,8 @@ make
 
 （5）检查是否与电控成功通信
 
+（6）修改 Yaw Power 补偿量
+
 ### 如果自瞄无法使用
 
 （1）检查曝光是否正常，图像亮度是否足够
@@ -103,7 +52,17 @@ make
 
 （4）相机以及串口是否正常工作
 
+（5）检查敌方装甲板上是否贴有数字，数字是否完整
+
 如果还用不了，那就是你参数问题
+
+### 如需部署在RM机器人上
+
+（1）在自己的笔记本电脑上进行编译部署后放到小电脑上进行运行
+
+（2）注意串口波特率为921600
+
+（3）剩下步骤如上
 
 
 
