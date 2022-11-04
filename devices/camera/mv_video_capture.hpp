@@ -18,6 +18,7 @@
 #include <opencv2/imgproc/imgproc_c.h>
 
 #include <CameraApi.h>
+#include "utils/log.h"
 
 namespace mindvision {
 

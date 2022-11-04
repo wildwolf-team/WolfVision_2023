@@ -36,6 +36,10 @@ WolfVision::WolfVision() try {
   net_armor_->detection_init(fmt::format("{}{}", CONFIG_FILE_PATH, "/net/opt4_FP16.xml"), "GPU");
   armor_.rst.reserve(128);
   pnp_->serYawPower(yaw_power_);
+  t_log_ = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  log_t_ss_ << std::put_time(std::localtime(&t_log_), "/log/%Y_%m_%d_%H_%M_%S");
+  log_t_str_ = CONFIG_FILE_PATH + log_t_ss_.str() + ".txt";
+  LOG::setDestination(log_t_str_);
   if (vw_mode_) {
     t_ = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     vw_t_ss_ << std::put_time(std::localtime(&t_), "/video/%Y_%m_%d_%H_%M_%S");
@@ -51,7 +55,9 @@ WolfVision::~WolfVision() {}
 void WolfVision::autoAim() {
   auto start = std::chrono::system_clock::now();
   ThreadPool pool(4);
+  LOG::info("Start Running");
   while (true) {
+    LOG::open(log_t_str_);
     is_shoot_ = false;
     if (capture_->isOpen()) {
 
@@ -73,6 +79,7 @@ void WolfVision::autoAim() {
         vw_src_.write(write_img_);
         sync();
       }
+      robo_inf_.model = 6;
       switch (robo_inf_.model) {
             case Mode::TRADITION_MODE: {
             // std::cout << "is TRADITION_MODE" << std::endl;
@@ -145,8 +152,7 @@ void WolfVision::autoAim() {
               fore_angle = net_armor_->forecast_armor(pnp_->returnDepth(), robo_inf_.bullet_velocity.load(), armor_.rst[0].pts, src_img_);
               cv::putText(src_img_, std::to_string(fore_angle), cv::Point(50, 200), 2, 4, cv::Scalar(0, 255, 0));
             }
-            updataWriteData(robo_cmd_, pnp_->returnYawAngle() - fore_angle, pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), 0);
-            break;
+            updataWriteData(robo_cmd_, pnp_->returnYawAngle() - fore_angle, pnp_->returnPitchAngle(), pnp_->returnDepth(), armor_.rst.size(), 0);            break;
           }
           default: {
             // std::cout << "Mode::SUP_SHOOT" << "\n";
@@ -171,8 +177,10 @@ void WolfVision::autoAim() {
       armor_.rst.clear();
       memset(armor_.quantity, 0, sizeof(armor_.quantity));
       switchMode();
+      LOG::close();
     } else {
       capture_->open();
+      LOG::close();
     }
   }
 }
@@ -260,6 +268,7 @@ void WolfVision::serialWrite() {
         serial_read_excepted_times = 0;
       }
       fmt::print("[{}] serial_ exception: {}\n", idntifier_red, e.what());
+      LOG::info("Not find Serial"); 
       std::this_thread::sleep_for(1000ms);
     }
 }

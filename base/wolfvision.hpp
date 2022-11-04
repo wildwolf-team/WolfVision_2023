@@ -35,6 +35,7 @@
 #include "utils/utils.hpp"
 #include "utils/json.hpp"
 #include "utils/fps.hpp"
+#include "utils/log.h"
 
 
 auto idntifier = fmt::format(fg(fmt::color::green) | fmt::emphasis::bold, "wolfvision");
@@ -91,9 +92,12 @@ class WolfVision
   private:
     std::string       vw_t_str_;
     std::stringstream vw_t_ss_;
+    std::string       log_t_str_;
+    std::stringstream log_t_ss_;
     cv::VideoWriter   vw_src_;
     bool vw_mode_ = false;
     time_t t_;
+    time_t t_log_;
 
   private:
     cv::Mat src_img_;

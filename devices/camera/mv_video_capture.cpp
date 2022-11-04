@@ -39,6 +39,7 @@ void VideoCapture::operator>>(cv::Mat& img) {
     img = cv::cvarrToMat(iplImage, true);
   } else {
     fmt::print("[{}] read img from camera failed.\n", idntifier_red);
+    LOG::info("Camera Offline");
     is_open_ = false;
   }
 }
@@ -72,12 +73,11 @@ void VideoCapture::open() {
 
   if (piNums == 0) {
     fmt::print("[{}] Error, no mindvision industrial camera detected.\n", idntifier_red);
-
+    LOG::info("Not Found Camera");
     is_open_ = false;
   } else {
     // 相机初始化
     cameraStatus = CameraInit(&pCameraList, -1, -1, &hCamera);
-
     if (cameraStatus != CAMERA_STATUS_SUCCESS && cameraStatus != CAMERA_STATUS_DEVICE_IS_OPENED) {
       fmt::print("[{}] Error, Init mindvision industrial camera failed: {}\n", idntifier_red, cameraStatus);
 

@@ -1,6 +1,7 @@
 #pragma once
 #include "serial/serial.h"
 #include "utils/utils.hpp"
+#include "utils/log.h"
 #include <iostream>
 auto idntifier_green = fmt::format(fg(fmt::color::green) | fmt::emphasis::bold, "serial");
 auto idntifier_red   = fmt::format(fg(fmt::color::red)   | fmt::emphasis::bold, "serial");
@@ -17,6 +18,7 @@ class RoboSerial : public serial::Serial {
       fmt::print("[{}] Serial init successed.\n", idntifier_green);
     } catch(const std::exception& e) {
       fmt::print("[{}] Serial init failed, {}.\n", idntifier_red, e.what());
+      LOG::info("Serial init failed");
     }
   }
 
