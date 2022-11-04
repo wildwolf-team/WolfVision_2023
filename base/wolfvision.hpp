@@ -74,9 +74,12 @@ class WolfVision
     basic_net::armor_detection armor_;
     int buff_num_        = 0;
     int other_num_       = 0;
+    int armor_num_       = 0;
+    int armor_count_     = 0;
     int camera_exposure_ = 0;
     int buff_exposure_   = 0;
     int fps_             = 0;
+    float fore_angle_    = 0.f;
     float yaw_power_     = 0.f;
     float pitch_         = 0.f;
     float depth_         = 0.f;

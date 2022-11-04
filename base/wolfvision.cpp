@@ -111,31 +111,38 @@ void WolfVision::autoAim() {
             buff_->runTask(src_img_, robo_inf_, robo_cmd_, time);
             break;
           }
-          case Mode::TOP_MODE: {
+           case Mode::TOP_MODE: {
             // std::cout << "Mode::TOP_MODE" << "\n";
             net_armor_->process_frame(src_img_, armor_);
-            if (net_armor_->screen_top_armor(robo_inf_, armor_, src_img_)) {
+            if (net_armor_->screen_top_armor(robo_inf_, armor_, src_img_, armor_num_)) {
               if (armor_.rst[0].tag_id == 1 || armor_.rst[0].tag_id == 0) {
                 pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 1, armor_.rst[0].pts);
               } else {
                 pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 0, armor_.rst[0].pts);
               }
-              // 当装甲板正面时更新深度
-              float error_angle = atan((armor_.rst[0].pts[3].y - armor_.rst[0].pts[0].y) /
-                                       (armor_.rst[0].pts[3].x - armor_.rst[0].pts[0].x));
-              error_angle = atan(error_angle) * 180 / M_PI;
-              if (fabs(error_angle) < 0.5f) {
-                depth_ = pnp_->returnDepth();
+              std::vector<cv::Point2f> _p;
+              net_armor_->forecastFlagV(armor_.armor_t, -pnp_->returnYawAngle(), inf_.pitch_angle.load());
+              net_armor_->topAutoShoot(pnp_->returnDepth(), robo_inf_.bullet_velocity.load(), armor_, src_img_, armor_num_);
+              cv::putText(src_img_, std::to_string(fore_angle_), cv::Point(50, 200), 2, 4, cv::Scalar(0, 255, 0));
+              armor_num_++;
+              armor_count_++;
+              if (armor_count_ > 10) {
+                armor_count_ = 10;
               }
-              net_armor_->forecastFlagV(armor_.armor_t, inf_.yaw_angle.load() - pnp_->returnYawAngle(), inf_.pitch_angle.load() + pnp_->returnPitchAngle());
-              is_shoot_ = net_armor_->topAutoShoot(pnp_->returnDepth(), robo_inf_.bullet_velocity.load(), armor_.rst[0].pts, net_armor_->returnArmorRotatedRect(), src_img_);
               if (armor_.rst[0].tag_id == 1 || armor_.rst[0].tag_id == 0) {
                 pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 1, net_armor_->returnArmorRotatedRect(), depth_);
               } else {
                 pnp_->solvePnP(robo_inf_.bullet_velocity.load(), 0, net_armor_->returnArmorRotatedRect(), depth_);
               }
+            } else {
+              armor_count_--;
+              if (armor_count_ < 0) {
+                armor_count_ = 0;
+                armor_num_ = 1;
+              }
             }
-            updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), depth_, armor_.rst.size(), is_shoot_);
+            webImage(src_img_);
+            updataWriteData(robo_cmd_, pnp_->returnYawAngle(), pnp_->returnPitchAngle(), depth_, armor_.rst.size(), net_armor_->returnIsShoot());
             break;
           }
           case Mode::FORECAST_MODE: {

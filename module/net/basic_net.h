@@ -62,7 +62,7 @@ public:
     // std::vector<bbox_t> process_frame(Mat& inframe);
     void process_frame(cv::Mat& inframe, armor_detection& armor);
     bool screen_armor(const RoboInf& _robo_inf, armor_detection& armor, cv::Mat _src_img);
-    bool screen_top_armor(const RoboInf& _robo_inf, armor_detection& armor, cv::Mat _src_img);
+    bool screen_top_armor(const RoboInf& _robo_inf, armor_detection& armor, cv::Mat _src_img, int n);
     void defense_tower(const float depth, const int bullet_velocity, cv::Point2f p[4], cv::Mat src_img);
     void forecastFlagV(float time, double angle, double p_angle);
     /**
@@ -73,8 +73,9 @@ public:
      * @return std::vector<cv::Point2f> 
      */
     double forecast_armor(const float depth, const int bullet_velocity, cv::Point2f p[4], cv::Mat src_img);
-    bool topAutoShoot(const float depth, const int bullet_velocity, cv::Point2f p[4], const cv::RotatedRect top_armor, cv::Mat src_img);
+    void topAutoShoot(const float depth, const int bullet_velocity, armor_detection& armor, cv::Mat src_img, int n);
     cv::RotatedRect returnArmorRotatedRect() { return last_top_armor; }
+    bool returnIsShoot()                     { return is_shoot_;}
    private:
     /**
      * @brief 计算两点之间距离
@@ -87,7 +88,8 @@ public:
     void  kalman_init();
     std::vector<bbox_t> armor_;
     cv::RotatedRect last_top_armor;
-    cv::Point last_armor_center = cv::Point(0, 0);
+    cv::Point2f     last_top_center   = cv::Point2f(0, 0);
+    cv::Point2f     last_armor_center = cv::Point2f(0, 0);
     int last_height = 0;
     //存储初始化获得的可执行网络
     ExecutableNetwork   _network;           //
@@ -114,6 +116,10 @@ public:
     int num[7];
     double              c_speed = 0.f;
     double              p_speed = 0.f;
+    bool                is_shoot_ = false;
+    int                 lose_count = 3;
+    int                 last_compensate_w_ = 0;
+    int last_width_              = 0;
 };
 }
 #endif

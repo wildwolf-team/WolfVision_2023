@@ -8,48 +8,31 @@ Detector::~Detector(){}
 float Detector::getDistance(const cv::Point a, const cv::Point b) { return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y)); }
 
 // 小陀螺自动击打
-bool Detector::topAutoShoot(const float depth, const int bullet_velocity, cv::Point2f p[4], const cv::RotatedRect top_armor, cv::Mat src_img) {
-  double predict_time  = (float(depth) / (bullet_velocity));
-  float T                    = fabs(90 / (c_speed * 180 / CV_PI));
-  cv::putText(src_img, std::to_string(T), cv::Point(50, 100), 1, 2, cv::Scalar(0, 255, 0));
-  int i = 0;
-  while (fabs(predict_time) > fabs(T)) {
-    T += fabs(90 / (c_speed * 180 / CV_PI));
-    ++i;
-    if (i > 4) {
-      break;
+void Detector::topAutoShoot(const float depth, const int bullet_velocity, armor_detection& armor, cv::Mat src_img, int n) {
+  double predict_time = (float(depth) / (bullet_velocity)) + 0.45;
+  double f = fabs(1 / (2 * M_PI / c_speed));
+  if (f > 5e-2) {
+    while (predict_time > f) {
+      predict_time -= f;
     }
   }
-  float      diff_time = T - fabs(predict_time);
-  // cv::putText(src_img, std::to_string(diff_time), cv::Point(50, 100), 1, 2, cv::Scalar(0, 255, 0));
-  static int last_last_compensate_w;
-  static int last_compensate_w;
-  double     s_yaw        = atan2(diff_time * c_speed * float(depth), float(depth));
-  if (T > 10) {
-    s_yaw = atan2(predict_time * c_speed * float(depth), float(depth));
+  double aa                          = atan2(predict_time * c_speed * 1000, 1);
+  int compensate_w                   = tan(aa);
+  int width = (getDistance(armor.rst[0].pts[0], armor.rst[0].pts[3]) + getDistance(armor.rst[0].pts[1], armor.rst[0].pts[2]))*0.15;
+  cv::putText(src_img, std::to_string(c_speed), cv::Point(50, 400), 2, 4, cv::Scalar(0, 255, 0));
+  cv::putText(src_img, std::to_string(f), cv::Point(50, 600), 2, 4, cv::Scalar(255, 255, 0));
+  static cv::Point2f ss              = cv::Point2f(0, 0);
+  ss                                 = cv::Point2f(-compensate_w, 0);
+  is_shoot_                          = false;
+  for (int i = 0; i < armor.rst.size(); ++i) {
+    cv::Point2f center                 = (armor.rst[i].pts[0] + armor.rst[i].pts[2]) * 0.5 + ss;
+    cv::circle(src_img, center, 15, cv::Scalar(0, 255, 255), -1);
+    cv::line(src_img, cv::Point(src_img.cols * 0.50 - width, center.y-50), cv::Point(src_img.cols * 0.50 - width, center.y+50), cv::Scalar(0, 0, 255), 5);
+    cv::line(src_img, cv::Point(src_img.cols * 0.50 + width, center.y-50), cv::Point(src_img.cols * 0.50 + width, center.y+50), cv::Scalar(0, 255, 0), 5);
+    if (center.x < src_img.cols * 0.50 + width && center.x > src_img.cols * 0.50 - width) {
+      is_shoot_ = true;
+    }
   }
-  int        compensate_w = 0.5 * tan(s_yaw) * 180 / M_PI;
-  // compensate_w            = (last_last_compensate_w + last_compensate_w + compensate_w) * 0.333;
-  // last_compensate_w       = compensate_w;
-  // last_last_compensate_w  = last_compensate_w;
-  cv::putText(src_img, std::to_string(compensate_w), cv::Point(50, 50), 1, 2, cv::Scalar(255, 255, 255));
-  static cv::Point2f ss           = cv::Point2f(0, 0);
-  ss                              = cv::Point2f(compensate_w, 0);
-  p[0] += ss;
-  p[1] += ss;
-  p[2] += ss;
-  p[3] += ss;
-  cv::Point2f center = (p[2] + p[0]) * 0.5;
-  int width = (p[2].y- p[0].y) * 1.2;
-  cv::circle(src_img, center, 15, cv::Scalar(0, 255, 255), -1);
-  cv::line(src_img, cv::Point(src_img.cols * 0.52 - width, 0), cv::Point(src_img.cols * 0.52 - width, src_img.rows), cv::Scalar(0, 0, 255));
-  cv::line(src_img, cv::Point(src_img.cols * 0.52 + width, 0), cv::Point(src_img.cols * 0.52 + width, src_img.rows), cv::Scalar(0, 0, 255));
-  if (center.x < src_img.cols * 0.52 + width && center.x > src_img.cols * 0.52 - width) {
-    cv::putText(src_img, std::to_string(1), cv::Point(50, 150), 1, 2, cv::Scalar(255, 255, 255));
-    return true;
-  }
-  cv::putText(src_img, std::to_string(0), cv::Point(50, 150), 1, 2, cv::Scalar(255, 255, 255));
-  return false;
 }
 
 double Detector::forecast_armor(const float depth, const int bullet_velocity, cv::Point2f p[4], cv::Mat src_img) {
@@ -114,7 +97,7 @@ void Detector::forecastFlagV(float time, double angle, double p_angle) {
   }
 }
 
-bool Detector::screen_top_armor(const RoboInf& _robo_inf, armor_detection& armor, cv::Mat _src_img) {
+bool Detector::screen_top_armor(const RoboInf& _robo_inf, armor_detection& armor, cv::Mat _src_img, int n) {
   cv::Point img_center = cv::Point(_src_img.cols * 0.5, _src_img.rows * 0.5);
   if (_robo_inf.robot_color == Color::BLUE) {
     for (int i = 0; i < armor.rst.size(); ++i) {
@@ -134,33 +117,55 @@ bool Detector::screen_top_armor(const RoboInf& _robo_inf, armor_detection& armor
   armor.rst = armor_;
   for (int i = 0; i < armor.rst.size(); ++i) {
     cv::Point armor_center       = (armor.rst[i].pts[0] + armor.rst[i].pts[1] + armor.rst[i].pts[2] + armor.rst[i].pts[3]) * 0.25;
-    armor.rst[i].distance_center = getDistance(img_center, armor_center);
+    if (last_armor_center == cv::Point2f(0, 0)) {
+      armor.rst[i].distance_center = getDistance(img_center, armor_center);
+    } else {
+      armor.rst[i].distance_center = getDistance(last_armor_center, armor_center);
+    }
     num[armor.rst[i].tag_id] += 1;
   }
   std::sort(armor.rst.begin(), armor.rst.end(), [](bbox_t _a, bbox_t _b) { return _a.distance_center < _b.distance_center; });
 
   armor.top_id = armor.rst[0].tag_id;
+  if (armor.top_id > 6 || armor.top_id < 0) armor.top_id = 3; 
   std::cout << "armor.top_id = " << armor.top_id << "\n";
-  int height = 0;
+  int height = 0, width = 0;
   if (armor.quantity[armor.top_id] > 0) {
     for (int i = 0; i < armor.rst.size(); ++i) {
       cv::Point2f center;
       if (armor.rst[i].tag_id == armor.top_id) {
         center = (armor.rst[i].pts[0] + armor.rst[i].pts[1] + armor.rst[i].pts[2] + armor.rst[i].pts[3]) * 0.25;
-        height += abs(armor.rst[i].pts[2].y - armor.rst[i].pts[0].y);
+        height += getDistance(armor.rst[i].pts[0], armor.rst[i].pts[1]);
+        height += getDistance(armor.rst[i].pts[3], armor.rst[i].pts[2]);
+        width  += getDistance(armor.rst[i].pts[0], armor.rst[i].pts[3]);
+        width  += getDistance(armor.rst[i].pts[1], armor.rst[i].pts[2]);
         cv::circle(_src_img, center, 10, cv::Scalar(255, 255, 255), -1);
       }
       armor.top_center += center;
     }
     armor.top_center /= (armor.quantity[armor.top_id] + 1);
-    height /= (armor.quantity[armor.top_id]);
-    std::cout << "armor.top_center = " << armor.top_center << "\n";
+    height /= 2 * (armor.quantity[armor.top_id]);
+    width /= 2 * (armor.quantity[armor.top_id]); 
   }
 
-  if (armor.rst[0].tag_id == 1 || armor.rst[0].tag_id == 0) {
-    last_top_armor = cv::RotatedRect(armor.top_center, cv::Size(height * 3.3, height), 0);
+  // if (last_armor_center != cv::Point2f(0, 0)) {
+  if (n == 1) {
+    last_top_center = armor.top_center;
   } else {
-    last_top_armor = cv::RotatedRect(armor.top_center, cv::Size(height * 2.2, height), 0);
+    last_top_center = last_top_center / n * (n - 1) + armor.top_center / n;
+  }
+    
+  // }
+  armor.top_center += last_top_center;
+  armor.top_center *= 0.5;
+
+  cv::putText(_src_img, std::to_string(n), cv::Point(50, 100), cv::FONT_HERSHEY_SIMPLEX, 3, {0, 255, 0}, 3);
+  
+  std::cout << "armor.top_center = " << armor.top_center << "\n";
+  if (armor.rst[0].tag_id == 1 || armor.rst[0].tag_id == 0) {
+    last_top_armor = cv::RotatedRect(armor.top_center, cv::Size(height, height), 0);
+  } else {
+    last_top_armor = cv::RotatedRect(armor.top_center, cv::Size(height, height), 0);
   }
 
   cv::rectangle(_src_img, last_top_armor.boundingRect(), cv::Scalar(255, 255, 255), 3, 8);
@@ -175,11 +180,20 @@ bool Detector::screen_top_armor(const RoboInf& _robo_inf, armor_detection& armor
   }
   // std::cout << "armor.top_center = " << armor.top_center << "\n";
   cv::circle(_src_img, armor.top_center, 10, cv::Scalar(255, 0, 255), -1);
+  for (int i = 0; i < armor.rst.size(); ++i) {
+    if (armor.rst[i].tag_id != armor.top_id) {
+      armor.rst.erase(std::begin(armor.rst) + i);
+    }
+  }
   armor_.clear();
   armor_.shrink_to_fit();
   if (armor.rst.size() > 0) {
+    last_armor_center = last_top_center;
+    last_height = (getDistance(armor.rst[0].pts[0], armor.rst[0].pts[1]) + getDistance(armor.rst[0].pts[2], armor.rst[0].pts[3])) * 0.5;
     return true;
   }
+  last_armor_center = cv::Point2f(0, 0);
+  last_height = 0;
   return false;
 }
 
@@ -201,7 +215,7 @@ bool Detector::screen_armor(const RoboInf& _robo_inf, armor_detection& armor, cv
     armor.rst = armor_;
     for (int i = 0; i < armor.rst.size(); ++i) {
         cv::Point armor_center       = (armor.rst[i].pts[0] + armor.rst[i].pts[1] + armor.rst[i].pts[2] + armor.rst[i].pts[3]) * 0.25;
-        if (last_armor_center == cv::Point(0, 0)) {
+        if (last_armor_center == cv::Point2f(0, 0)) {
           armor.rst[i].distance_center = getDistance(img_center, armor_center);
         } else {
           armor.rst[i].distance_center = getDistance(last_armor_center, armor_center);
@@ -333,9 +347,9 @@ void Detector::process_frame(cv::Mat& inframe, armor_detection& armor){
     }
     // ROI处理
     cv::Mat src_img = inframe.clone();
-    cv::Point roi_size = cv::Point(320, 192);
+    cv::Point2f roi_size = cv::Point2f(320, 192);
     cv::Rect roi = cv::Rect(0, 0, 0, 0);
-    if (last_armor_center != cv::Point(0, 0) && last_height * 2 < roi_size.y) {
+    if (last_armor_center != cv::Point2f(0, 0) && last_height * 2 < roi_size.y) {
       roi = cv::Rect(last_armor_center - roi_size, last_armor_center + roi_size);
       if (roi.x < 0) roi.x = 0;
       if (roi.y < 0) roi.y = 0;
