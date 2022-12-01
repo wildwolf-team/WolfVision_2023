@@ -41,32 +41,35 @@ double Detector::forecast_armor(const float depth, const int bullet_velocity, cv
   double aa                          = atan2(predict_time * c_speed * 1000, 1);
   int compensate_w                   = tan(aa);
   cv::putText(src_img, std::to_string(c_speed), cv::Point(50, 400), 2, 4, cv::Scalar(0, 255, 0));
-  // cv::putText(src_img, std::to_string(compensate_w), cv::Point(50, 200), 3, 6, cv::Scalar(0, 0, 0));
+  cv::putText(src_img, std::to_string(compensate_w), cv::Point(50, 600), 3, 6, cv::Scalar(0, 0, 0));
   static cv::Point2f ss              = cv::Point2f(0, 0);
   ss                                 = cv::Point2f(-compensate_w, 0);
   cv::Point2f center                 = (p[0] + p[2]) * 0.5 + ss;
   cv::circle(src_img, center, 15, cv::Scalar(0, 255, 255), -1);
-  p[0] += ss;
-  p[1] += ss;
-  p[2] += ss; 
-  p[3] += ss;
+  int width = (getDistance(p[0], p[3]) + getDistance(p[1], p[2])) * 0.25;
+  cv::line(src_img, cv::Point(src_img.cols * 0.50 - width, center.y-50), cv::Point(src_img.cols * 0.50 - width, center.y+50), cv::Scalar(0, 0, 255), 5);
+  cv::line(src_img, cv::Point(src_img.cols * 0.50 + width, center.y-50), cv::Point(src_img.cols * 0.50 + width, center.y+50), cv::Scalar(0, 255, 0), 5);
+  if (center.x < src_img.cols * 0.50 + width && center.x > src_img.cols * 0.50 - width) {
+    is_shoot_ = true;
+  } else {
+    is_shoot_ = false;
+  }
   return s_yaw;
 }
 
 void Detector::kalman_init() {
   A       = _Kalman::Matrix_xxd::Identity();
   R       = _Kalman::Matrix_xxd::Identity();
-  H(0, 0) = 1;
+  H(0, 0) = 1, H(0, 1) = 0;
   R(0, 0) = 0.01;
   for (int i = 1; i < S; i++) {
     R(i, i) = 100;
   }
   x_v = _Kalman(A, H, R, Q, init, 0);
   y_v = _Kalman(A, H, R, Q, init, 0);
-  R(0, 0) = 0.1;
-  _Kalman::Matrix_zzd Q_{20};
-  top_angle = _Kalman(A, H, R, Q_, init, 0);
+  top_angle = _Kalman(A, H, R, Q, init, 0);
 }
+
 
 void Detector::forecastFlagV(float time, double angle, double p_angle) {
   static double last_angle = 0.f;
@@ -84,10 +87,11 @@ void Detector::forecastFlagV(float time, double angle, double p_angle) {
     // std::cout << "c_speed==========================" << c_speed << std::endl;
   }
   static double p_last_angle = 0.f;
-  if (std::fabs(p_last_angle - p_angle) > 5. / 180. * M_PI) {
+  // p_angle = c_speed;
+  if (std::fabs(p_last_angle - p_angle) > 0.5f / 180. * M_PI) {
     y_v.reset(p_angle, time);
     p_last_angle = p_angle;
-    std::cout << "reset-pitch" << std::endl;
+    // std::cout << "reset-pitch" << std::endl;
   } else {
     p_last_angle = p_angle;
     Eigen::Matrix<double, 1, 1> ck{p_angle};
@@ -148,6 +152,7 @@ bool Detector::screen_top_armor(const RoboInf& _robo_inf, armor_detection& armor
     width /= 2 * (armor.quantity[armor.top_id]); 
   }
 
+  
   // if (last_armor_center != cv::Point2f(0, 0)) {
   if (n == 1) {
     last_top_center = armor.top_center;
@@ -196,6 +201,7 @@ bool Detector::screen_top_armor(const RoboInf& _robo_inf, armor_detection& armor
   last_height = 0;
   return false;
 }
+
 
 bool Detector::screen_armor(const RoboInf& _robo_inf, armor_detection& armor, cv::Mat _src_img) {
     cv::Point img_center = cv::Point(_src_img.cols * 0.5, _src_img.rows * 0.5);

@@ -220,7 +220,7 @@ void WolfVision::disData() {
 }
 
 void WolfVision::switchMode() {
- if (robo_inf_.model == Mode::ENERGY_AGENCY || robo_inf_.model == Mode::TRADITION_MODE) {
+  if (robo_inf_.model == Mode::ENERGY_AGENCY || robo_inf_.model == Mode::TRADITION_MODE) {
     buff_num_ += 1;
     other_num_ = 0;
   } else {
@@ -232,6 +232,10 @@ void WolfVision::switchMode() {
   }
   if (other_num_ == 1) {
     capture_->setCameraExposureTime(camera_exposure_);
+  }
+  if (robo_inf_.model != Mode::TOP_MODE) {
+    armor_num_ = 1;
+    armor_count_ = 0;
   }
 }
 

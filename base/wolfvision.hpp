@@ -74,7 +74,7 @@ class WolfVision
     basic_net::armor_detection armor_;
     int buff_num_        = 0;
     int other_num_       = 0;
-    int armor_num_       = 0;
+    int armor_num_       = 1;
     int armor_count_     = 0;
     int camera_exposure_ = 0;
     int buff_exposure_   = 0;
