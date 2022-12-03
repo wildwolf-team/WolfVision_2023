@@ -7,9 +7,10 @@
   - 单位 mm
   - 云台与相机 相机作为参考点
 -->
+<!--舵轮Y为0.049 Z为-0.067-->
 <PTZ_CAMERA_X>0.0</PTZ_CAMERA_X>
-<PTZ_CAMERA_Y>49.2</PTZ_CAMERA_Y>
-<PTZ_CAMERA_Z>-67.4</PTZ_CAMERA_Z>
+<PTZ_CAMERA_Y>0.049</PTZ_CAMERA_Y>
+<PTZ_CAMERA_Z>-0.067</PTZ_CAMERA_Z>
 <!-- 
   PTZ_BARREL_X - 云台与枪管的 X 轴偏移(左负右正)
   PTZ_BARREL_Y - 云台与枪管的 Y 轴偏移(上负下正)
