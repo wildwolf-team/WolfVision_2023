@@ -79,7 +79,11 @@ void WolfVision::autoAim() {
         vw_src_.write(write_img_);
         sync();
       }
-      robo_inf_.model = 6;
+      if(net_armor_->returntop()){
+        robo_inf_.model = 5;
+      }else{
+        robo_inf_.model = 6;
+      }
       switch (robo_inf_.model) {
             case Mode::TRADITION_MODE: {
             // std::cout << "is TRADITION_MODE" << std::endl;
@@ -181,6 +185,8 @@ void WolfVision::autoAim() {
           webImage(src_img_);
       });
       }
+      last_armor_ = armor_;
+      net_armor_->isTop(last_armor_, armor_.rst.size(), armor_.rst[0].tag_id);
       armor_.rst.clear();
       memset(armor_.quantity, 0, sizeof(armor_.quantity));
       switchMode();

@@ -5,12 +5,57 @@ Detector::Detector(){}
 
 Detector::~Detector(){}
 
+//Top
+bool Detector::isTop(armor_detection& armor, int armor_size, int armor_id){
+  int now_armor_size = armor_size;
+  int now_armor_id   = armor_id;
+  int same_id_size   = 0;
+  if(now_armor_size > 0){
+    for(size_t i = 0;i < now_armor_size;i++){
+      if(armor.rst[i].tag_id == now_armor_id){
+        same_id_size ++;
+      }
+    }
+  }
+  if(last_armor_size != same_id_size){
+    switch_armor++;
+    nor_switch_armor -= 3;
+    same_armor = false;
+  }else{
+    nor_switch_armor++;
+    same_armor = true;
+  }
+  if(switch_armor > 10){
+      top_ = true;
+      switch_armor = 0;
+      count_top++;
+  }
+  if(nor_switch_armor > 30 || count_top > 200){
+      top_ = false;
+      switch_armor = 0;
+      count_nor++;
+  }
+  if(count_top > 210){
+    count_top = 0;
+  }
+  if(nor_switch_armor > 32 || nor_switch_armor < 0){
+    nor_switch_armor = 0;
+  }
+  last_armor_size = same_id_size;
+  return top_;
+}
+
 float Detector::getDistance(const cv::Point a, const cv::Point b) { return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y)); }
 
 // 小陀螺自动击打
 void Detector::topAutoShoot(const float depth, const int bullet_velocity, armor_detection& armor, cv::Mat src_img, int n) {
-  double predict_time = (float(depth) / (bullet_velocity)) + 0.45;
+  double predict_time = (float(depth) / (bullet_velocity));
+  // if(predict_time < 0.25){
+  //   predict_time = 0.1;
+  // }
+  // std::cout << "pt=" << predict_time << std::endl;
   double f = fabs(1 / (2 * M_PI / c_speed));
+  // std::cout << "c_speed= " << c_speed << std::endl;
   if (f > 5e-2) {
     while (predict_time > f) {
       predict_time -= f;
@@ -18,7 +63,7 @@ void Detector::topAutoShoot(const float depth, const int bullet_velocity, armor_
   }
   double aa                          = atan2(predict_time * c_speed * 1000, 1);
   int compensate_w                   = tan(aa);
-  int width = (getDistance(armor.rst[0].pts[0], armor.rst[0].pts[3]) + getDistance(armor.rst[0].pts[1], armor.rst[0].pts[2]))*0.15;
+  int width = (getDistance(armor.rst[0].pts[0], armor.rst[0].pts[3]) + getDistance(armor.rst[0].pts[1], armor.rst[0].pts[2])) * 0.2;
   cv::putText(src_img, std::to_string(c_speed), cv::Point(50, 400), 2, 4, cv::Scalar(0, 255, 0));
   cv::putText(src_img, std::to_string(f), cv::Point(50, 600), 2, 4, cv::Scalar(255, 255, 0));
   static cv::Point2f ss              = cv::Point2f(0, 0);
@@ -31,17 +76,18 @@ void Detector::topAutoShoot(const float depth, const int bullet_velocity, armor_
     cv::line(src_img, cv::Point(src_img.cols * 0.50 + width, center.y-50), cv::Point(src_img.cols * 0.50 + width, center.y+50), cv::Scalar(0, 255, 0), 5);
     if (center.x < src_img.cols * 0.50 + width && center.x > src_img.cols * 0.50 - width) {
       is_shoot_ = true;
+      // std::cout << "shoot=" << is_shoot_ << std::endl;
     }
   }
 }
 
 double Detector::forecast_armor(const float depth, const int bullet_velocity, cv::Point2f p[4], cv::Mat src_img) {
-  double predict_time = (float(depth) / (bullet_velocity)) + 0.1;
-  double s_yaw                       = atan2(predict_time * c_speed * depth, depth) * 180 / M_PI;
+  double predict_time = (float(depth) / (bullet_velocity));
+  double s_yaw                       = atan2(predict_time * c_speed * depth, (depth - depth * 0.1)) * 180 / M_PI;
   double aa                          = atan2(predict_time * c_speed * 1000, 1);
   int compensate_w                   = tan(aa);
-  cv::putText(src_img, std::to_string(c_speed), cv::Point(50, 400), 2, 4, cv::Scalar(0, 255, 0));
-  cv::putText(src_img, std::to_string(compensate_w), cv::Point(50, 600), 3, 6, cv::Scalar(0, 0, 0));
+  // cv::putText(src_img, std::to_string(c_speed), cv::Point(50, 400), 2, 4, cv::Scalar(0, 255, 0));
+  // cv::putText(src_img, std::to_string(compensate_w), cv::Point(50, 600), 3, 6, cv::Scalar(0, 0, 0));
   static cv::Point2f ss              = cv::Point2f(0, 0);
   ss                                 = cv::Point2f(-compensate_w, 0);
   cv::Point2f center                 = (p[0] + p[2]) * 0.5 + ss;
@@ -49,11 +95,6 @@ double Detector::forecast_armor(const float depth, const int bullet_velocity, cv
   int width = (getDistance(p[0], p[3]) + getDistance(p[1], p[2])) * 0.25;
   cv::line(src_img, cv::Point(src_img.cols * 0.50 - width, center.y-50), cv::Point(src_img.cols * 0.50 - width, center.y+50), cv::Scalar(0, 0, 255), 5);
   cv::line(src_img, cv::Point(src_img.cols * 0.50 + width, center.y-50), cv::Point(src_img.cols * 0.50 + width, center.y+50), cv::Scalar(0, 255, 0), 5);
-  if (center.x < src_img.cols * 0.50 + width && center.x > src_img.cols * 0.50 - width) {
-    is_shoot_ = true;
-  } else {
-    is_shoot_ = false;
-  }
   return s_yaw;
 }
 
@@ -61,7 +102,7 @@ void Detector::kalman_init() {
   A       = _Kalman::Matrix_xxd::Identity();
   R       = _Kalman::Matrix_xxd::Identity();
   H(0, 0) = 1, H(0, 1) = 0;
-  R(0, 0) = 0.01;
+  R(0, 0) = 0.1;
   for (int i = 1; i < S; i++) {
     R(i, i) = 100;
   }
@@ -75,10 +116,11 @@ void Detector::forecastFlagV(float time, double angle, double p_angle) {
   static double last_angle = 0.f;
   angle                    = angle * M_PI / 180;
   p_angle                  = p_angle * M_PI / 180;
-  if (std::fabs(last_angle - angle) > 5. / 180. * M_PI) {
+  if (std::fabs(last_angle - angle) > 3. / 180. * M_PI) {
     x_v.reset(angle, time);
     last_angle = angle;
     std::cout << "reset-yaw" << std::endl;
+    LOG::info("Reset yaw");
   } else {
     last_angle = angle;
     Eigen::Matrix<double, 1, 1> ck{angle};
