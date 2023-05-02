@@ -29,6 +29,8 @@ struct PnP_Config {
   float  barrel_ptz_offset_y = 0.0;
   float  offset_armor_pitch  = 0.0;
   float  offset_armor_yaw    = 0.0;
+  float  low_offset_armor_pitch  = 0.0;
+  float  low_offset_armor_yaw    = 0.0;
 };
 
 class PnP {

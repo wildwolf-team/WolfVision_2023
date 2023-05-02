@@ -43,12 +43,16 @@ class PnP : public abstract_pnp::PnP {
     fs_config["OFFSET_ARMOR_YAW"] >> pnp_config_.offset_armor_yaw;
     fs_config["OFFSET_ARMOR_PITCH"] >> pnp_config_.offset_armor_pitch;
 
+    fs_config["LOW_OFFSET_ARMOR_YAW"] >> pnp_config_.low_offset_armor_yaw;
+    fs_config["LOW_OFFSET_ARMOR_PITCH"] >> pnp_config_.low_offset_armor_pitch;
+
     fmt::print("[{}] Info, ptz_camera_x,y,z: {}, {}, {}\n", idntifier_green, pnp_config_.ptz_camera_x, pnp_config_.ptz_camera_y, pnp_config_.ptz_camera_z);
 
     fmt::print("[{}] Info, ptz_barrel_x,y: {}, {}\n", idntifier_green, pnp_config_.barrel_ptz_offset_x, pnp_config_.barrel_ptz_offset_y);
 
     fmt::print("[{}] Info, offset_armor_yaw,pitch: {}, {}\n", idntifier_green, pnp_config_.offset_armor_yaw, pnp_config_.offset_armor_pitch);
 
+    fmt::print("[{}] Info, low_offset_armor_yaw,pitch: {}, {}\n", idntifier_green, pnp_config_.low_offset_armor_yaw, pnp_config_.low_offset_armor_pitch);
 
     fmt::print("[{}] Init PnP configuration finished\n", idntifier_green);
   }
@@ -103,8 +107,13 @@ class PnP : public abstract_pnp::PnP {
     cv::Mat     ptz       = cameraPtz(tvec_);
     cv::Point3f angle     = getAngle(ptz, _ballet_speed, 1, _depth);
     angle.x *= yaw_power_;
-    pnp_info_.x = angle.x + pnp_config_.offset_armor_yaw;
-    pnp_info_.y = angle.y + pnp_config_.offset_armor_pitch;
+    if(_ballet_speed > 15){
+      pnp_info_.x = angle.x + pnp_config_.offset_armor_yaw;
+      pnp_info_.y = angle.y + pnp_config_.offset_armor_pitch;
+    }else{
+      pnp_info_.x = angle.x + pnp_config_.low_offset_armor_yaw;
+      pnp_info_.y = angle.y + pnp_config_.low_offset_armor_pitch;
+    }
     pnp_info_.z = angle.z;
     
     if (fabs(pnp_info_.x) > 30) {
@@ -140,8 +149,13 @@ class PnP : public abstract_pnp::PnP {
     cv::Mat     ptz   = cameraPtz(tvec_);
     cv::Point3f angle = getAngle(ptz, _ballet_speed, 1, _depth);
     angle.x *= yaw_power_;
-    pnp_info_.x = angle.x + pnp_config_.offset_armor_yaw;
-    pnp_info_.y = angle.y + pnp_config_.offset_armor_pitch;
+    if(_ballet_speed > 15){
+      pnp_info_.x = angle.x + pnp_config_.offset_armor_yaw;
+      pnp_info_.y = angle.y + pnp_config_.offset_armor_pitch;
+    }else{
+      pnp_info_.x = angle.x + pnp_config_.low_offset_armor_yaw;
+      pnp_info_.y = angle.y + pnp_config_.low_offset_armor_pitch;
+    }
     pnp_info_.z = angle.z;
     
     if (fabs(pnp_info_.x) > 30) {
@@ -175,8 +189,14 @@ class PnP : public abstract_pnp::PnP {
 
     cv::Mat     ptz   = cameraPtz(tvec_);
     cv::Point3f angle = getAngle(ptz, _ballet_speed, 1, _depth);
-    pnp_info_.x = angle.x;
-    pnp_info_.y = angle.y;
+    angle.x *= yaw_power_;
+    if(_ballet_speed > 15){
+      pnp_info_.x = angle.x + pnp_config_.offset_armor_yaw;
+      pnp_info_.y = angle.y + pnp_config_.offset_armor_pitch;
+    }else{
+      pnp_info_.x = angle.x + pnp_config_.low_offset_armor_yaw;
+      pnp_info_.y = angle.y + pnp_config_.low_offset_armor_pitch;
+    }
     pnp_info_.z = angle.z;
     if (fabs(pnp_info_.x) > 30) {
       pnp_info_.x = 0;
