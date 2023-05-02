@@ -72,6 +72,7 @@ class WolfVision
     std::shared_ptr<basic_armor::Detector> basic_armor_;
     std::shared_ptr<mindvision::VideoCapture> capture_;
     basic_net::armor_detection armor_;
+    basic_net::armor_detection last_armor_;
     int buff_num_        = 0;
     int other_num_       = 0;
     int armor_num_       = 1;

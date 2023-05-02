@@ -8,6 +8,7 @@
 #include <cmath>
 #include "utils/utils.hpp"
 #include "utils/kalman.h"
+#include "utils/log.h"
 
 using namespace InferenceEngine;
 constexpr int S = 2;
@@ -76,6 +77,9 @@ public:
     void topAutoShoot(const float depth, const int bullet_velocity, armor_detection& armor, cv::Mat src_img, int n);
     cv::RotatedRect returnArmorRotatedRect() { return last_top_armor; }
     bool returnIsShoot()                     { return is_shoot_;}
+    //Top
+    bool isTop(armor_detection& armor, int armor_size, int armor_id);
+    bool returntop(){return top_;}
    private:
     /**
      * @brief 计算两点之间距离
@@ -111,7 +115,7 @@ public:
     _Kalman::Matrix_xxd A;
     _Kalman::Matrix_zxd H;
     _Kalman::Matrix_xxd R;
-    _Kalman::Matrix_zzd Q{4};
+    _Kalman::Matrix_zzd Q{10};
     _Kalman::Matrix_x1d init{0, 0};
     int num[7];
     double              c_speed = 0.f;
@@ -120,6 +124,18 @@ public:
     int                 lose_count = 3;
     int                 last_compensate_w_ = 0;
     int last_width_              = 0;
+    //Top
+    bool top_ = false; 
+    bool same_armor              = false;
+    bool same_id                 = false;
+    int  switch_armor            = 0;
+    int  nor_switch_armor        = 0;
+    int  last_armor_id           = 0;
+    int  last_armor_size         = 0;
+    int count_top = 0;
+    int count_nor = 0;
+    int count     = 0;
+    cv::Point2f ss               = cv::Point2f(0, 0);
 };
 }
 #endif
