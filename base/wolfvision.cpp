@@ -79,11 +79,6 @@ void WolfVision::autoAim() {
         vw_src_.write(write_img_);
         sync();
       }
-      if(net_armor_->returntop()){
-        robo_inf_.model = 5;
-      }else{
-        robo_inf_.model = 6;
-      }
       switch (robo_inf_.model) {
             case Mode::TRADITION_MODE: {
             // std::cout << "is TRADITION_MODE" << std::endl;
